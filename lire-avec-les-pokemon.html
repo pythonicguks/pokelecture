@@ -1,0 +1,543 @@
+<title>Lire avec les Pokémon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* Mise en page : un carnet de lecture en trois niveaux (courts, moyens, longs), un texte à la fois, QCM sans le texte sous les yeux. */
+:root{
+  --bg:#F2F5FB; --surface:#FFFFFF; --fg:#16213E; --muted:#56627F; --line:#D6DDEC;
+  --accent:#2B50D9; --accent-fg:#FFFFFF; --accent-soft:#E3EAFE;
+  --good:#12683F; --good-bg:#DDF4E7; --bad:#A92D19; --bad-bg:#FCE4DF;
+  --star:#F2A900; --star-off:#CBD3E4; --focus:#F2A900;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Verdana",system-ui,sans-serif;
+  --read-size:1.5rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1730; --surface:#19234A; --fg:#EAF0FF; --muted:#A3AFD0; --line:#2B3865;
+    --accent:#8AA6FF; --accent-fg:#0F1730; --accent-soft:#22305F;
+    --good:#7BE3AB; --good-bg:#13392A; --bad:#FFA391; --bad-bg:#4A1F1B;
+    --star:#FFC93C; --star-off:#3A4778; --focus:#FFC93C; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1730; --surface:#19234A; --fg:#EAF0FF; --muted:#A3AFD0; --line:#2B3865;
+  --accent:#8AA6FF; --accent-fg:#0F1730; --accent-soft:#22305F;
+  --good:#7BE3AB; --good-bg:#13392A; --bad:#FFA391; --bad-bg:#4A1F1B;
+  --star:#FFC93C; --star-off:#3A4778; --focus:#FFC93C; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:1.0625rem;line-height:1.5;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:44rem;margin-inline:auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(2rem,7vw,2.8rem);font-weight:800}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.25rem;font-weight:800}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:8px}
+
+.top{display:flex;flex-direction:column;gap:10px}
+.lede{color:var(--muted);max-width:36rem}
+.score-line{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;font-weight:700}
+.score-line .big{font-family:var(--display);font-size:1.6rem;display:flex;align-items:center;gap:6px}
+
+.level{display:flex;flex-direction:column;gap:12px}
+.level-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.level-head span{color:var(--muted);font-size:.95rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:12px}
+.card{min-width:0;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-height:7.5rem;transition:transform .12s, border-color .12s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card .t{font-family:var(--display);font-weight:800;font-size:1.2rem;line-height:1.15}
+.card .meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;color:var(--muted);font-size:.9rem}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:700;color:var(--muted)}
+.dot{width:.8rem;height:.8rem;border-radius:50%;border:2px solid var(--fg);display:inline-block}
+.d-elec{background:#F7D02C}.d-eau{background:#6FA8F0}.d-plante{background:#7BCB6F}.d-feu{background:#F59A5E}.d-normal{background:#C9C5B6}.d-fee{background:#F2A6C9}.d-insecte{background:#C0D14A}
+.stars{display:inline-flex;gap:2px;color:var(--star)}
+.stars svg{width:1.15rem;height:1.15rem;display:block}
+.stars .off{color:var(--star-off)}
+.stars.lg svg{width:2.4rem;height:2.4rem}
+
+.btn{border:0;border-radius:12px;padding:14px 22px;min-height:3.25rem;font-weight:700;font-size:1.1rem;background:var(--accent);color:var(--accent-fg);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--fg);border:2px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn.small{min-height:2.5rem;padding:6px 14px;font-size:1rem}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+
+.panel{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:clamp(16px,4vw,28px);display:flex;flex-direction:column;gap:18px}
+.bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.read{display:flex;flex-direction:column;gap:12px;font-size:var(--read-size);line-height:1.7;letter-spacing:.01em}
+.read p{max-width:30em}
+
+.progress{display:flex;gap:8px}
+.progress i{width:2.2rem;height:.6rem;border-radius:99px;background:var(--line)}
+.progress i.on{background:var(--accent)}
+.progress i.done{background:var(--good)}
+.q{font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,5vw,1.8rem);line-height:1.2;text-wrap:balance}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{text-align:left;width:100%;min-height:3.75rem;border:2px solid var(--line);background:var(--bg);border-radius:14px;padding:14px 16px;font-size:1.2rem;display:flex;gap:12px;align-items:center}
+.opt:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.opt .mark{width:1.8rem;height:1.8rem;flex:none;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:1rem}
+.opt.ok{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.opt.ok .mark{background:var(--good);border-color:var(--good);color:var(--good-bg)}
+.opt.ko{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.opt.ko .mark{background:var(--bad);border-color:var(--bad);color:var(--bad-bg)}
+.opt:disabled{cursor:default}
+.fb{border-radius:14px;padding:14px 16px;background:var(--accent-soft);display:flex;flex-direction:column;gap:6px}
+.fb strong{font-family:var(--display);font-size:1.2rem}
+.peek{border:2px dashed var(--line);border-radius:14px;padding:14px 16px;font-size:1.15rem;line-height:1.6}
+
+.result{align-items:center;text-align:center}
+.result .msg{font-size:1.2rem;max-width:26rem}
+
+details.parent{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px 16px}
+details.parent summary{cursor:pointer;font-weight:700}
+details.parent .in{display:flex;flex-direction:column;gap:14px;padding-top:14px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+ul.tips{margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:6px}
+.tags{display:flex;flex-wrap:wrap;gap:4px 10px}
+.mini{display:inline-flex;gap:8px;align-items:center}
+
+.hunt{background:var(--accent-soft);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.hunt strong{font-family:var(--display);font-size:1.2rem}
+.hunt-words{display:flex;flex-wrap:wrap;gap:8px}
+.hw{font-family:var(--display);font-weight:800;font-size:1.25rem;padding:4px 14px;border-radius:99px;background:var(--surface);border:2px solid var(--line);display:inline-flex;gap:6px;align-items:center}
+.hw.found{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.w{font:inherit;color:inherit;background:none;border:0;padding:0 1px;margin:0;border-radius:6px;cursor:pointer;letter-spacing:inherit}
+.w:hover{background:var(--accent-soft)}
+.w.found{background:var(--good-bg);color:var(--good);box-shadow:0 2px 0 var(--good)}
+
+.emblem{width:4.2rem;height:4.2rem;border-radius:50%;border:3px solid var(--fg);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:2rem;color:#16213E;flex:none}
+.emblem.lg{width:7rem;height:7rem;font-size:3.4rem}
+.emblem.locked{background:var(--line);border-color:var(--line);color:var(--muted)}
+.medal{width:4.2rem;height:4.2rem;border-radius:50%;display:grid;place-items:center;color:#16213E;border:3px solid var(--fg);box-shadow:inset 0 0 0 4px var(--surface)}
+.medal svg{width:2rem;height:2rem}
+.medal.locked{background:var(--line);color:var(--muted);border-color:var(--line)}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr));gap:12px}
+.slot{background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.slot.locked{border-style:dashed;background:transparent;color:var(--muted)}
+.slot .no{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.slot .nm{font-family:var(--display);font-weight:800;font-size:1.15rem;line-height:1.15}
+.reward{background:var(--accent-soft);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+.reward strong{font-family:var(--display);font-size:1.3rem}
+.scene{display:block;width:100%;aspect-ratio:2/1;max-width:100%;border-radius:10px;overflow:hidden;border:2px solid var(--line)}
+.scene svg{width:100%;height:100%;display:block}
+.scene.banner{border-radius:14px;aspect-ratio:5/2}
+.pal{width:5rem;height:5rem;border-radius:50%;background:var(--accent-soft);border:3px solid var(--line);display:grid;place-items:center;flex:none;overflow:hidden}
+.pal svg{width:90%;height:90%;display:block}
+.pal.lg{width:8.5rem;height:8.5rem}
+.pal.locked{background:var(--line)}
+.pal.locked svg{filter:brightness(0);opacity:.5}
+.gem{width:4rem;height:4rem;display:block}
+.gem svg{width:100%;height:100%;display:block}
+.gem.locked svg{filter:brightness(0);opacity:.35}
+.pop{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}.pop{animation:none}}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+var STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 6.2 6.6.8-4.9 4.6 1.3 6.7L12 17.5 6.1 20.8l1.3-6.7L2.5 9.5l6.6-.8z"/></svg>';
+var TYPES={elec:'Électrik',eau:'Eau',plante:'Plante',feu:'Feu',normal:'Normal',fee:'Fée',insecte:'Insecte'};
+var LEVELS=[
+ {n:1,name:'Niveau 1',sub:'Textes très courts'},
+ {n:2,name:'Niveau 2',sub:'Textes moyens'},
+ {n:3,name:'Niveau 3',sub:'Textes plus longs'}
+];
+var TEXTS=[
+ {id:'pikachu-faim',lvl:1,type:'elec',title:'Pikachu a faim',lines:[
+  'Pikachu a faim.','Il cherche une pomme dans le jardin.','Il voit un grand arbre.','Il saute et il prend une pomme rouge.','Pikachu mange et il est content.'],
+  qs:[
+   {q:'Que cherche Pikachu ?',a:'Une pomme',w:['Un bonbon','Un ballon'],h:'Il cherche une pomme dans le jardin.'},
+   {q:'Où cherche-t-il ?',a:'Dans le jardin',w:['Dans la maison','À l’école'],h:'Il cherche une pomme dans le jardin.'},
+   {q:'De quelle couleur est la pomme ?',a:'Rouge',w:['Verte','Jaune'],h:'Il prend une pomme rouge.'}]},
+ {id:'carapuce-plage',lvl:1,type:'eau',title:'Carapuce à la plage',lines:[
+  'Carapuce va à la plage avec Sacha.','Il joue dans l’eau.','Sacha rit très fort.','Puis ils font un château de sable.'],
+  qs:[
+   {q:'Avec qui Carapuce va-t-il à la plage ?',a:'Avec Sacha',w:['Avec Pikachu','Avec Ondine'],h:'Carapuce va à la plage avec Sacha.'},
+   {q:'Que fait Carapuce dans l’eau ?',a:'Il joue',w:['Il dort','Il mange'],h:'Il joue dans l’eau.'},
+   {q:'Que font-ils à la fin ?',a:'Un château de sable',w:['Un gâteau','Un dessin'],h:'Puis ils font un château de sable.'}]},
+ {id:'bulbizarre-dort',lvl:1,type:'plante',title:'Bulbizarre dort',lines:[
+  'Bulbizarre dort sous un grand arbre.','Le soleil brille.','Un petit oiseau se pose sur son dos.','Bulbizarre ouvre un œil et il sourit.'],
+  qs:[
+   {q:'Où dort Bulbizarre ?',a:'Sous un grand arbre',w:['Dans un lit','Au bord de l’eau'],h:'Bulbizarre dort sous un grand arbre.'},
+   {q:'Qui se pose sur son dos ?',a:'Un petit oiseau',w:['Un papillon','Un chat'],h:'Un petit oiseau se pose sur son dos.'},
+   {q:'Que fait Bulbizarre à la fin ?',a:'Il sourit',w:['Il pleure','Il court'],h:'Bulbizarre ouvre un œil et il sourit.'}]},
+ {id:'salameche-froid',lvl:2,type:'feu',title:'Salamèche a froid',lines:[
+  'Il pleut depuis ce matin.','Salamèche a froid et il est triste, car sa flamme est toute petite.','Sacha lui donne une couverture et du bois sec.','Salamèche souffle doucement sur le bois.','Bientôt, un bon feu chauffe la tente.'],
+  qs:[
+   {q:'Quel temps fait-il ?',a:'Il pleut',w:['Il neige','Il y a du soleil'],h:'Il pleut depuis ce matin.'},
+   {q:'Que donne Sacha à Salamèche ?',a:'Une couverture et du bois sec',w:['Un chapeau et des gants','Une pomme et du pain'],h:'Sacha lui donne une couverture et du bois sec.'},
+   {q:'Qu’est-ce qui chauffe la tente ?',a:'Un bon feu',w:['Une lampe','Le soleil'],h:'Bientôt, un bon feu chauffe la tente.'}]},
+ {id:'course-parc',lvl:2,type:'elec',title:'La course dans le parc',lines:[
+  'Samedi, il y a une course dans le parc.','Rattata, Pikachu et Évoli veulent gagner.','Rattata part très vite, mais il s’arrête pour manger un biscuit.','Pikachu court sans s’arrêter.','Évoli est fatigué et il finit dernier.','Pikachu passe la ligne en premier !'],
+  qs:[
+   {q:'Quel jour a lieu la course ?',a:'Samedi',w:['Lundi','Dimanche'],h:'Samedi, il y a une course dans le parc.'},
+   {q:'Pourquoi Rattata perd-il du temps ?',a:'Il s’arrête pour manger un biscuit',w:['Il tombe par terre','Il a mal aux pattes'],h:'Il s’arrête pour manger un biscuit.'},
+   {q:'Qui gagne la course ?',a:'Pikachu',w:['Rattata','Évoli'],h:'Pikachu passe la ligne en premier !'}]},
+ {id:'roucool-perdu',lvl:2,type:'normal',title:'Le petit Roucool',lines:[
+  'Un petit Roucool est perdu dans la forêt.','Il pleure, car il ne retrouve plus sa maman.','Mélofée l’entend et vient près de lui.','Elle dit : « N’aie pas peur, je vais t’aider. »','Ensemble, ils marchent jusqu’au grand lac.','Là, la maman Roucool les attend.'],
+  qs:[
+   {q:'Pourquoi le petit Roucool pleure-t-il ?',a:'Il ne retrouve plus sa maman',w:['Il a faim','Il a froid'],h:'Il pleure, car il ne retrouve plus sa maman.'},
+   {q:'Qui entend le petit Roucool ?',a:'Mélofée',w:['Pikachu','Sacha'],h:'Mélofée l’entend et vient près de lui.'},
+   {q:'Où est la maman Roucool ?',a:'Près du grand lac',w:['Dans la forêt','Dans un arbre'],h:'Ensemble, ils marchent jusqu’au grand lac. Là, la maman Roucool les attend.'}]},
+ {id:'marche-ville',lvl:3,type:'eau',title:'Au marché',lines:[
+  'Ce matin, Sacha et Ondine vont au marché de la ville.','Il faut acheter du pain, du lait et des baies.','Ondine porte le panier, et Sacha tient la liste.','Près du stand de fruits, un Miaouss prend une baie sans rien dire.','Psykokwak le voit et crie très fort.','Le marchand rit.','Il donne la baie à Miaouss, car celui-ci a l’air d’avoir très faim.','Sacha et Ondine rentrent avec un panier bien plein.'],
+  qs:[
+   {q:'Que doivent acheter Sacha et Ondine ?',a:'Du pain, du lait et des baies',w:['Des pommes et du fromage','Du pain, des œufs et du riz'],h:'Il faut acheter du pain, du lait et des baies.'},
+   {q:'Qui tient la liste ?',a:'Sacha',w:['Ondine','Psykokwak'],h:'Ondine porte le panier, et Sacha tient la liste.'},
+   {q:'Pourquoi le marchand donne-t-il la baie à Miaouss ?',a:'Miaouss a l’air d’avoir faim',w:['Miaouss a payé','Miaouss est son ami'],h:'Il donne la baie à Miaouss, car celui-ci a l’air d’avoir très faim.'}]},
+ {id:'nuit-lumieres',lvl:3,type:'fee',title:'La nuit des lumières',lines:[
+  'Un soir d’été, Sacha ne peut pas dormir.','Il sort de la tente et lève la tête.','Des centaines de petites lumières dansent au-dessus de l’herbe.','Ce sont des Muciole !','Pikachu se réveille et regarde aussi, les yeux grands ouverts.','Sacha murmure : « C’est la plus belle nuit de mon voyage. »','Les lumières dansent encore longtemps, puis elles s’éteignent une à une.'],
+  qs:[
+   {q:'Pourquoi Sacha sort-il de la tente ?',a:'Il ne peut pas dormir',w:['Il a entendu un bruit','Il cherche Pikachu'],h:'Un soir d’été, Sacha ne peut pas dormir. Il sort de la tente.'},
+   {q:'Que font les petites lumières ?',a:'Elles dansent au-dessus de l’herbe',w:['Elles montent dans les arbres','Elles restent sans bouger'],h:'Des centaines de petites lumières dansent au-dessus de l’herbe.'},
+   {q:'Comment se sent Sacha à la fin ?',a:'Heureux',w:['Fâché','Inquiet'],h:'Il dit : « C’est la plus belle nuit de mon voyage. »'}]},
+ {id:'oeuf-mystere',lvl:3,type:'fee',title:'L’œuf mystère',lines:[
+  'Dans le jardin du professeur, Ondine trouve un œuf blanc avec des points bleus.','Elle le prend avec soin et le porte au laboratoire.','Le professeur explique qu’il faut le garder au chaud.','Pendant trois jours, les enfants se relaient pour veiller sur l’œuf.','Le matin du quatrième jour, la coquille craque.','Un tout petit Togepi sort de l’œuf et leur sourit.'],
+  qs:[
+   {q:'Comment est l’œuf ?',a:'Blanc avec des points bleus',w:['Rouge avec des points blancs','Tout bleu'],h:'Ondine trouve un œuf blanc avec des points bleus.'},
+   {q:'Que faut-il faire pour l’œuf ?',a:'Le garder au chaud',w:['Le mettre au frais','Le laver'],h:'Le professeur explique qu’il faut le garder au chaud.'},
+   {q:'Quand la coquille craque-t-elle ?',a:'Le quatrième jour',w:['Le premier jour','Le deuxième jour'],h:'Le matin du quatrième jour, la coquille craque.'}]}
+];
+
+/* Un compagnon par texte, et 3 mots à retrouver pour le cristal bonus. */
+var EXTRA={
+ 'pikachu-faim':{mon:'Zapin',type:'elec',words:['pomme','jardin','arbre']},
+ 'carapuce-plage':{mon:'Gouttiou',type:'eau',words:['plage','château','sable']},
+ 'bulbizarre-dort':{mon:'Feuillo',type:'plante',words:['arbre','soleil','oiseau']},
+ 'salameche-froid':{mon:'Braisou',type:'feu',words:['pleut','couverture','feu']},
+ 'course-parc':{mon:'Biscotte',type:'normal',words:['course','biscuit','ligne']},
+ 'roucool-perdu':{mon:'Plumette',type:'normal',words:['forêt','maman','lac']},
+ 'marche-ville':{mon:'Bullo',type:'eau',words:['marché','panier','baies']},
+ 'nuit-lumieres':{mon:'Lucili',type:'insecte',words:['tente','lumières','herbe']},
+ 'oeuf-mystere':{mon:'Lunette',type:'fee',words:['œuf','coquille','laboratoire']}
+};
+TEXTS.forEach(function(t,i){var x=EXTRA[t.id];t.mon=x.mon;t.type=x.type;t.words=x.words;t.no=i+1});
+var NEED=2; /* bonnes réponses nécessaires pour gagner le compagnon */
+
+var KEY='lire-pokemon-ce1-v1';
+var progress={};
+try{progress=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){progress={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(progress))}catch(e){}}
+var KEY2='lire-pokemon-ce1-v1-medailles';
+var medals={};
+try{medals=JSON.parse(localStorage.getItem(KEY2)||'{}')||{}}catch(e){medals={}}
+function saveMedals(){try{localStorage.setItem(KEY2,JSON.stringify(medals))}catch(e){}}
+function owned(t){return (progress[t.id]||0)>=NEED}
+function ownedCount(){return TEXTS.filter(owned).length}
+function medalCount(){return TEXTS.filter(function(t){return medals[t.id]}).length}
+var lastScreen='home';
+
+var state={screen:'home',text:null,q:null,readSize:1.5,confirmReset:false,hunt:{found:{},msg:''}};
+var app=document.getElementById('app');
+
+function stars(n,max,lg){
+  var s='<span class="stars'+(lg?' lg':'')+'" role="img" aria-label="'+n+' étoile'+(n>1?'s':'')+' sur '+max+'">';
+  for(var i=0;i<max;i++)s+='<span class="'+(i<n?'':'off')+'">'+STAR+'</span>';
+  return s+'</span>';
+}
+function words(t){return t.lines.join(' ').split(/\s+/).length}
+function byId(id){return TEXTS.filter(function(t){return t.id===id})[0]}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var x=a[i];a[i]=a[j];a[j]=x}return a}
+function totalStars(){var s=0;TEXTS.forEach(function(t){s+=progress[t.id]||0});return s}
+function doneCount(){return TEXTS.filter(function(t){return progress[t.id]!==undefined}).length}
+
+function home(){
+  var h='<header class="top"><h1>Lire avec les Pokémon</h1>'+
+   '<p class="lede">Lis le texte tranquillement. Quand tu as fini, le texte disparaît et tu réponds à trois questions. Chaque bonne réponse donne une étoile.</p>'+
+   '<div class="score-line"><span class="big">'+stars(1,1)+' '+totalStars()+' / '+(TEXTS.length*3)+'</span><span>Compagnons : '+ownedCount()+' / '+TEXTS.length+'</span><span>Cristaux : '+medalCount()+' / '+TEXTS.length+'</span></div>'+
+   '<div class="row"><button class="btn" data-act="dex">Ma collection</button></div></header>';
+  LEVELS.forEach(function(L){
+    h+='<section class="level"><div class="level-head"><h2>'+L.name+'</h2><span>'+L.sub+'</span></div><div class="cards">';
+    TEXTS.filter(function(t){return t.lvl===L.n}).forEach(function(t){
+      var best=progress[t.id];
+      h+='<button class="card" data-act="open" data-id="'+t.id+'"><span class="scene">'+sceneSVG(t.id)+'</span><span class="chip"><i class="dot d-'+t.type+'"></i>'+TYPES[t.type]+'</span>'+
+         '<span class="t">'+t.title+'</span>'+((owned(t)||medals[t.id])?'<span class="tags">'+(owned(t)?'<span class="chip">✓ Compagnon</span>':'')+(medals[t.id]?'<span class="chip">✓ Cristal</span>':'')+'</span>':'')+'<span class="meta"><span>'+words(t)+' mots</span>'+stars(best||0,3)+'</span></button>';
+    });
+    h+='</div></section>';
+  });
+  h+=parentCorner();
+  return h;
+}
+
+function parentCorner(){
+  var rows='';
+  TEXTS.forEach(function(t){
+    var b=progress[t.id];
+    rows+='<tr><td>'+t.title+'</td><td>Niveau '+t.lvl+'</td><td>'+(b===undefined?'—':b+' / 3')+'</td><td>'+(owned(t)?'✓ '+t.mon:'—')+'</td><td>'+(medals[t.id]?'✓':'—')+'</td></tr>';
+  });
+  return '<details class="parent"><summary>Espace parent</summary><div class="in">'+
+   '<ul class="tips"><li>Laissez votre enfant lire à voix haute, puis relisez la phrase qu’il a trouvée difficile.</li>'+
+   '<li>Après un 3 sur 3, passez au texte suivant. Après un 0 ou un 1, relisez le texte ensemble et recommencez.</li>'+
+   '<li>Le compagnon est gagné avec 2 bonnes réponses ou plus. Le cristal est gagnée en trouvant les 3 mots pendant la lecture.</li>'+
+   '<li>Les résultats restent sur cet appareil et ce navigateur.</li></ul>'+
+   '<div class="tbl"><table><thead><tr><th>Texte</th><th>Niveau</th><th>Meilleur score</th><th>Compagnon</th><th>Cristal</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+   '<div class="row">'+(state.confirmReset?
+     '<button class="btn small" data-act="reset-yes">Oui, tout effacer</button><button class="btn small ghost" data-act="reset-no">Annuler</button>':
+     '<button class="btn small ghost" data-act="reset">Effacer la progression</button>')+'</div></div></details>';
+}
+
+
+/* Compagnons originaux (dessins SVG simples, un par texte) et cristaux à gagner */
+var EYE=function(x,y,rx,ry,c){return '<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+ry+'" fill="'+c+'"/><circle cx="'+(x+rx*.3)+'" cy="'+(y-ry*.35)+'" r="'+(rx*.38)+'" fill="#fff" stroke="none"/>'};
+var PALS={
+ 'pikachu-faim':'<ellipse cx="38" cy="91" rx="8" ry="4" fill="#6fb4e8"/><ellipse cx="62" cy="91" rx="8" ry="4" fill="#6fb4e8"/><ellipse cx="50" cy="70" rx="25" ry="21" fill="#9fd8ff"/><ellipse cx="50" cy="76" rx="15" ry="12" fill="#eef9ff"/><ellipse cx="25" cy="68" rx="5" ry="8" fill="#6fb4e8" transform="rotate(20 25 68)"/><ellipse cx="75" cy="68" rx="5" ry="8" fill="#6fb4e8" transform="rotate(-20 75 68)"/><ellipse cx="50" cy="46" rx="26" ry="21" fill="#9fd8ff"/><path d="M53 2 L39 21 L49 21 L44 34 L62 14 L52 14 Z" fill="#ffd23f"/>'+'__E1__'+'<circle cx="31" cy="55" r="4.5" fill="#ffd23f"/><circle cx="69" cy="55" r="4.5" fill="#ffd23f"/><path d="M45 56 Q50 61 55 56" fill="none"/>',
+ 'carapuce-plage':'<ellipse cx="40" cy="92" rx="7" ry="3.8" fill="#2f86c8"/><ellipse cx="60" cy="92" rx="7" ry="3.8" fill="#2f86c8"/><path d="M22 58 Q6 54 8 70 Q16 74 25 70 Z" fill="#2f86c8"/><path d="M78 58 Q94 54 92 70 Q84 74 75 70 Z" fill="#2f86c8"/><path d="M50 6 Q83 44 81 67 Q79 91 50 91 Q21 91 19 67 Q17 44 50 6 Z" fill="#4aa8e8"/><ellipse cx="50" cy="74" rx="16" ry="13" fill="#bfe6ff"/><path d="M36 38 Q40 30 46 28" fill="none" stroke="#fff" stroke-width="3"/>'+'__E2__'+'<path d="M44 66 Q50 71 56 66" fill="none"/>',
+ 'bulbizarre-dort':'<path d="M74 80 Q94 80 91 62 Q89 54 81 58" fill="none" stroke="#3f9d4d" stroke-width="4"/><ellipse cx="40" cy="92" rx="8" ry="4" fill="#5fae56"/><ellipse cx="60" cy="92" rx="8" ry="4" fill="#5fae56"/><ellipse cx="50" cy="70" rx="26" ry="21" fill="#7cc96a"/><ellipse cx="50" cy="76" rx="14" ry="11" fill="#d9f2c4"/><ellipse cx="24" cy="66" rx="5" ry="8" fill="#7cc96a" transform="rotate(25 24 66)"/><ellipse cx="76" cy="66" rx="5" ry="8" fill="#7cc96a" transform="rotate(-25 76 66)"/><ellipse cx="50" cy="47" rx="24" ry="20" fill="#7cc96a"/><path d="M48 28 Q26 26 20 8 Q44 4 50 24 Z" fill="#3f9d4d"/><path d="M52 27 Q66 20 76 9 Q60 6 52 22 Z" fill="#4fb35c"/><path d="M24 11 Q38 16 47 24" fill="none" stroke="#2e7d32" stroke-width="1.2"/>'+'__E3__'+'<circle cx="33" cy="56" r="4" fill="#f59aa8"/><circle cx="67" cy="56" r="4" fill="#f59aa8"/><path d="M45 57 Q50 61 55 57" fill="none"/>',
+ 'salameche-froid':'<ellipse cx="76" cy="82" rx="7" ry="5" fill="#ffb02e"/><ellipse cx="40" cy="92" rx="8" ry="4" fill="#c85a22"/><ellipse cx="60" cy="92" rx="8" ry="4" fill="#c85a22"/><ellipse cx="50" cy="72" rx="24" ry="20" fill="#e8763a"/><ellipse cx="50" cy="77" rx="13" ry="11" fill="#ffd9a0"/><ellipse cx="27" cy="68" rx="5" ry="8" fill="#e8763a" transform="rotate(25 27 68)"/><ellipse cx="73" cy="68" rx="5" ry="8" fill="#e8763a" transform="rotate(-25 73 68)"/><circle cx="50" cy="46" r="22" fill="#e8763a"/><path d="M37 28 Q31 16 37 8 Q45 16 44 27 Z" fill="#ffb02e"/><path d="M47 26 Q43 10 50 2 Q57 10 53 26 Z" fill="#ffb02e"/><path d="M56 27 Q55 16 63 8 Q69 16 63 28 Z" fill="#ffb02e"/>'+'__E4__'+'<circle cx="34" cy="56" r="4" fill="#ffd23f"/><circle cx="66" cy="56" r="4" fill="#ffd23f"/><path d="M45 58 Q50 62 55 58" fill="none"/>',
+ 'course-parc':'<ellipse cx="26" cy="42" rx="9" ry="19" fill="#b98255" transform="rotate(15 26 42)"/><ellipse cx="74" cy="42" rx="9" ry="19" fill="#b98255" transform="rotate(-15 74 42)"/><circle cx="76" cy="82" r="6" fill="#fff2dc"/><ellipse cx="40" cy="92" rx="8" ry="4" fill="#b98255"/><ellipse cx="60" cy="92" rx="8" ry="4" fill="#b98255"/><ellipse cx="50" cy="74" rx="22" ry="18" fill="#e9c99a"/><ellipse cx="50" cy="79" rx="13" ry="10" fill="#fff2dc"/><ellipse cx="50" cy="46" rx="23" ry="19" fill="#e9c99a"/><ellipse cx="50" cy="54" rx="11" ry="8" fill="#fff2dc"/><ellipse cx="50" cy="51" rx="3.2" ry="2.2" fill="#2b2b2b"/>'+'__E5__'+'<path d="M45 57 Q50 61 55 57" fill="none"/>',
+ 'roucool-perdu':'<ellipse cx="42" cy="93" rx="6" ry="3.5" fill="#ffb02e"/><ellipse cx="58" cy="93" rx="6" ry="3.5" fill="#ffb02e"/><ellipse cx="20" cy="66" rx="8" ry="17" fill="#7e8bb3" transform="rotate(15 20 66)"/><ellipse cx="80" cy="66" rx="8" ry="17" fill="#7e8bb3" transform="rotate(-15 80 66)"/><circle cx="50" cy="60" r="32" fill="#a9b4d0"/><path d="M40 30 Q50 6 60 30 Z" fill="#7e8bb3"/><ellipse cx="50" cy="52" rx="25" ry="20" fill="#eef1fb"/><path d="M40 78 Q50 84 60 78" fill="none"/>'+'__E6__'+'<path d="M45 58 L55 58 L50 66 Z" fill="#ffb02e"/>',
+ 'marche-ville':'<ellipse cx="20" cy="78" rx="10" ry="5" fill="#4a86d6" transform="rotate(-20 20 78)"/><ellipse cx="80" cy="78" rx="10" ry="5" fill="#4a86d6" transform="rotate(20 80 78)"/><ellipse cx="50" cy="74" rx="33" ry="20" fill="#6fa8f0"/><ellipse cx="50" cy="80" rx="19" ry="11" fill="#d6ecff"/><ellipse cx="50" cy="48" rx="22" ry="18" fill="#6fa8f0"/><circle cx="39" cy="27" r="5" fill="#e6f4ff"/><circle cx="50" cy="20" r="6.5" fill="#e6f4ff"/><circle cx="62" cy="27" r="5" fill="#e6f4ff"/>'+'__E7__'+'<circle cx="50" cy="54" r="2.8" fill="#2b2b2b"/><path d="M44 59 Q50 63 56 59" fill="none"/>',
+ 'nuit-lumieres':'<path d="M42 24 Q36 8 27 8" fill="none"/><path d="M58 24 Q64 8 73 8" fill="none"/><circle cx="27" cy="8" r="3.4" fill="#ffd23f"/><circle cx="73" cy="8" r="3.4" fill="#ffd23f"/><ellipse cx="21" cy="80" rx="4.5" ry="7" fill="#5b8a2b"/><ellipse cx="79" cy="80" rx="4.5" ry="7" fill="#5b8a2b"/><ellipse cx="50" cy="67" rx="28" ry="26" fill="#9bc53d"/><path d="M50 42 V93" fill="none"/><circle cx="35" cy="62" r="5.5" fill="#fff1a0"/><circle cx="65" cy="62" r="5.5" fill="#fff1a0"/><circle cx="39" cy="79" r="4.8" fill="#fff1a0"/><circle cx="61" cy="79" r="4.8" fill="#fff1a0"/><ellipse cx="50" cy="40" rx="21" ry="16" fill="#6aa02e"/>'+'__E8__'+'<path d="M45 47 Q50 51 55 47" fill="none"/>',
+ 'oeuf-mystere':'<path d="M70 86 Q95 86 89 58 Q83 75 66 72 Q75 78 70 86 Z" fill="#ffe59a"/><ellipse cx="40" cy="92" rx="8" ry="4" fill="#a98fd8"/><ellipse cx="60" cy="92" rx="8" ry="4" fill="#a98fd8"/><ellipse cx="50" cy="72" rx="22" ry="19" fill="#c9b5ee"/><ellipse cx="50" cy="77" rx="12" ry="10" fill="#f1e8ff"/><path d="M30 38 L23 17 L43 30 Z" fill="#c9b5ee"/><path d="M70 38 L77 17 L57 30 Z" fill="#c9b5ee"/><ellipse cx="50" cy="46" rx="24" ry="20" fill="#c9b5ee"/><path d="M50 27 L51.8 31.2 L56.2 31.6 L52.9 34.5 L53.9 38.8 L50 36.5 L46.1 38.8 L47.1 34.5 L43.8 31.6 L48.2 31.2 Z" fill="#ffe59a"/>'+'__E9__'+'<circle cx="32" cy="55" r="4" fill="#f59aa8"/><circle cx="68" cy="55" r="4" fill="#f59aa8"/><path d="M45 57 Q50 61 55 57" fill="none"/>'
+};
+var EYES={'pikachu-faim':[41,46,4,5,'#2b2b2b',59,46],'carapuce-plage':[40,60,4,5.2,'#2b2b2b',60,60],'bulbizarre-dort':[41,47,3.8,5,'#2b2b2b',59,47],'salameche-froid':[42,46,3.8,5,'#2b2b2b',58,46],'course-parc':[41,44,3.6,4.6,'#3a2210',59,44],'roucool-perdu':[40,50,6,6.5,'#2b2b2b',60,50],'marche-ville':[41,46,3.8,5,'#2b2b2b',59,46],'nuit-lumieres':[43,40,3.6,4.4,'#2b2b2b',57,40],'oeuf-mystere':[41,46,4,5.4,'#4b3a7a',59,46]};
+
+/* Décors : un par histoire, uniquement les lieux et les objets du texte */
+var SKY='<rect x="0" y="0" width="200" height="100" fill="#bfe6ff" stroke="none"/>';
+function cloud(x,y){return '<path d="M'+x+' '+y+' q0 -9 10 -9 q3 -8 13 -5 q9 -4 13 5 q8 1 7 9 Z" fill="#fff"/>'}
+var SCENES={
+ 'pikachu-faim':SKY+cloud(18,22)+cloud(140,18)
+  +'<path d="M0 72 Q60 58 120 66 T200 64 V100 H0 Z" fill="#8fd16a"/>'
+  +'<path d="M8 80 V66 M22 80 V66 M36 80 V66 M50 80 V66 M2 70 H56 M2 76 H56" fill="none" stroke="#a9744a" stroke-width="3"/>'
+  +'<path d="M128 90 L132 50 H146 L150 90 Z" fill="#a9744a"/>'
+  +'<circle cx="122" cy="40" r="20" fill="#5fb84a"/><circle cx="156" cy="38" r="22" fill="#5fb84a"/><circle cx="139" cy="22" r="20" fill="#6fca58"/>'
+  +'<circle cx="124" cy="44" r="4.5" fill="#e8433f"/><circle cx="150" cy="30" r="4.5" fill="#e8433f"/><circle cx="160" cy="48" r="4.5" fill="#e8433f"/><circle cx="136" cy="18" r="4.5" fill="#e8433f"/>'
+  +'<circle cx="96" cy="88" r="5.5" fill="#e8433f"/><path d="M96 82 Q99 78 102 80" fill="none"/>',
+ 'carapuce-plage':SKY+'<circle cx="170" cy="20" r="11" fill="#ffd23f"/>'+cloud(30,24)
+  +'<path d="M0 52 H200 V70 H0 Z" fill="#4aa8e8"/><path d="M10 58 q6 -4 12 0 M60 62 q6 -4 12 0 M120 57 q6 -4 12 0 M168 63 q6 -4 12 0" fill="none" stroke="#fff"/>'
+  +'<path d="M0 66 Q100 58 200 68 V100 H0 Z" fill="#f6dc9a"/>'
+  +'<path d="M70 92 V70 H78 V66 H84 V70 H92 V66 H98 V70 H106 V66 H112 V70 H120 V92 Z" fill="#e9c071"/><path d="M88 92 V82 Q95 74 102 82 V92 Z" fill="#a9744a"/>'
+  +'<path d="M95 66 V50" fill="none"/><path d="M95 50 L107 54 L95 58 Z" fill="#e8433f"/>'
+  +'<path d="M150 90 L156 76 H170 L176 90 Z" fill="#e8433f"/><path d="M156 76 Q163 68 170 76" fill="none"/>'
+  +'<path d="M30 88 l14 -14" fill="none" stroke="#a9744a" stroke-width="3"/><path d="M42 72 l8 -2 -2 8 Z" fill="#9aa7b8"/>',
+ 'bulbizarre-dort':SKY+'<circle cx="34" cy="26" r="13" fill="#ffd23f"/><path d="M34 6 V2 M34 50 V46 M14 26 H10 M58 26 H54 M20 12 l-3 -3 M48 12 l3 -3 M20 40 l-3 3 M48 40 l3 3" fill="none" stroke="#e6a800" stroke-width="2.5"/>'
+  +'<path d="M0 74 Q100 62 200 72 V100 H0 Z" fill="#8fd16a"/>'
+  +'<path d="M104 92 L110 44 H128 L134 92 Z" fill="#a9744a"/><path d="M128 56 L156 46" fill="none" stroke="#a9744a" stroke-width="4"/>'
+  +'<circle cx="100" cy="32" r="24" fill="#4fae4a"/><circle cx="140" cy="26" r="26" fill="#4fae4a"/><circle cx="120" cy="12" r="20" fill="#5fc25a"/>'
+  +'<ellipse cx="156" cy="41" rx="8" ry="6" fill="#6cc4ff"/><circle cx="162" cy="37" r="4" fill="#6cc4ff"/><circle cx="163" cy="36" r="1" fill="#2b2b2b"/><path d="M166 37 l4 1 -4 1 Z" fill="#ffb02e"/>'
+  +'<path d="M30 90 q3 -8 6 0 M56 86 q3 -8 6 0 M170 90 q3 -8 6 0" fill="none" stroke="#3f8f3a" stroke-width="2"/>',
+ 'salameche-froid':'<rect x="0" y="0" width="200" height="100" fill="#9fb3c8" stroke="none"/>'
+  +'<path d="M20 8 q0 -9 12 -8 q6 -9 18 -2 q12 -2 12 8 Z M120 10 q0 -9 12 -8 q6 -9 18 -2 q12 -2 12 8 Z" fill="#dde4ee"/>'
+  +'<path d="M14 24 l-4 10 M40 30 l-4 10 M70 20 l-4 10 M100 30 l-4 10 M136 22 l-4 10 M170 30 l-4 10 M188 18 l-4 10" fill="none" stroke="#4a86d6" stroke-width="2"/>'
+  +'<path d="M0 74 H200 V100 H0 Z" fill="#6f9a52"/>'
+  +'<path d="M22 86 L64 28 L106 86 Z" fill="#f59a5e"/><path d="M64 28 V86" fill="none"/><path d="M56 86 L64 60 L72 86 Z" fill="#7a3d1a"/>'
+  +'<path d="M130 90 L164 80 M134 80 L168 90" fill="none" stroke="#a9744a" stroke-width="6"/>'
+  +'<path d="M149 86 Q134 72 146 58 Q148 68 152 64 Q150 52 160 46 Q158 60 166 66 Q170 78 157 86 Z" fill="#ffb02e"/><path d="M151 84 Q146 76 152 70 Q155 76 158 72 Q162 80 157 84 Z" fill="#ffe066" stroke="none"/>',
+ 'course-parc':SKY+cloud(80,20)
+  +'<path d="M0 60 Q100 54 200 60 V100 H0 Z" fill="#8fd16a"/>'
+  +'<circle cx="22" cy="38" r="16" fill="#4fae4a"/><path d="M20 62 V52 H24 V62 Z" fill="#a9744a"/><circle cx="178" cy="40" r="15" fill="#4fae4a"/><path d="M176 62 V54 H180 V62 Z" fill="#a9744a"/>'
+  +'<path d="M0 96 Q90 70 200 74 V84 Q100 82 0 100 Z" fill="#e9c99a"/>'
+  +'<path d="M120 80 V30 M170 77 V30" fill="none" stroke="#5b6b85" stroke-width="3"/>'
+  +'<rect x="120" y="30" width="50" height="14" fill="#fff"/>'
+  +'<path d="M120 30 h6.25 v7 h-6.25 Z M132.5 30 h6.25 v7 h-6.25 Z M145 30 h6.25 v7 h-6.25 Z M157.5 30 h6.25 v7 h-6.25 Z M126.25 37 h6.25 v7 h-6.25 Z M138.75 37 h6.25 v7 h-6.25 Z M151.25 37 h6.25 v7 h-6.25 Z M163.75 37 h6.25 v7 h-6.25 Z" fill="#2b2b2b" stroke="none"/>'
+  +'<circle cx="60" cy="86" r="7" fill="#e9b872"/><circle cx="57" cy="84" r="1" fill="#7a3d1a" stroke="none"/><circle cx="62" cy="88" r="1" fill="#7a3d1a" stroke="none"/><circle cx="63" cy="83" r="1" fill="#7a3d1a" stroke="none"/>',
+ 'roucool-perdu':'<rect x="0" y="0" width="200" height="100" fill="#cfe9d4" stroke="none"/>'
+  +'<path d="M0 64 H200 V100 H0 Z" fill="#6fae5a"/>'
+  +'<ellipse cx="130" cy="80" rx="54" ry="13" fill="#4aa8e8"/><path d="M106 78 q6 -3 12 0 M140 84 q6 -3 12 0" fill="none" stroke="#fff"/>'
+  +'<path d="M18 70 L32 20 L46 70 Z" fill="#2f7d3a"/><path d="M44 68 L60 10 L76 68 Z" fill="#3a9147"/><path d="M164 60 L178 22 L192 60 Z" fill="#2f7d3a"/><path d="M84 66 L94 34 L104 66 Z" fill="#3a9147"/>'
+  +'<path d="M30 100 Q50 84 74 80 Q90 78 96 76" fill="none" stroke="#e9c99a" stroke-width="6"/>'
+  +'<path d="M150 30 q5 -5 10 0 q5 -5 10 0" fill="none" stroke-width="2"/>',
+ 'marche-ville':'<rect x="0" y="0" width="200" height="100" fill="#f3e7d3" stroke="none"/>'
+  +'<path d="M0 86 H200 V100 H0 Z" fill="#c9b79c"/>'
+  +'<path d="M30 20 H170 L178 40 H22 Z" fill="#fff"/><path d="M36 20 L30 40 H44 L50 20 Z M64 20 L58 40 H72 L78 20 Z M92 20 L86 40 H100 L106 20 Z M120 20 L114 40 H128 L134 20 Z M148 20 L142 40 H156 L162 20 Z" fill="#e8433f"/>'
+  +'<path d="M34 40 V86 M166 40 V86" fill="none" stroke="#a9744a" stroke-width="4"/>'
+  +'<rect x="30" y="64" width="140" height="22" fill="#d79b5e"/>'
+  +'<ellipse cx="62" cy="60" rx="20" ry="8" fill="#e9b872"/><path d="M50 58 l4 -4 M60 58 l4 -4 M70 58 l4 -4" fill="none"/>'
+  +'<path d="M96 64 V48 L100 42 V38 H108 V42 L112 48 V64 Z" fill="#fff"/><rect x="99" y="52" width="10" height="6" fill="#6cc4ff"/>'
+  +'<path d="M126 52 H160 L156 66 H130 Z" fill="#a9744a"/><circle cx="134" cy="50" r="4" fill="#8a3fb8"/><circle cx="142" cy="48" r="4" fill="#e8433f"/><circle cx="150" cy="50" r="4" fill="#8a3fb8"/><circle cx="146" cy="44" r="4" fill="#e8433f"/>',
+ 'nuit-lumieres':'<rect x="0" y="0" width="200" height="100" fill="#1b2155" stroke="none"/>'
+  +'<circle cx="164" cy="20" r="11" fill="#fff4c2"/><circle cx="170" cy="16" r="10" fill="#1b2155" stroke="none"/>'
+  +'<path d="M20 14 l1.5 3 3 .5 -2.2 2 .6 3 -2.9 -1.5 -2.9 1.5 .6 -3 -2.2 -2 3 -.5Z M70 8 l1.5 3 3 .5 -2.2 2 .6 3 -2.9 -1.5 -2.9 1.5 .6 -3 -2.2 -2 3 -.5Z M120 18 l1.5 3 3 .5 -2.2 2 .6 3 -2.9 -1.5 -2.9 1.5 .6 -3 -2.2 -2 3 -.5Z" fill="#fff4c2" stroke="none"/>'
+  +'<path d="M0 70 Q100 60 200 70 V100 H0 Z" fill="#26502e"/>'
+  +'<path d="M120 88 L148 46 L176 88 Z" fill="#f59a5e"/><path d="M148 46 V88" fill="none"/><path d="M142 88 L148 70 L154 88 Z" fill="#7a3d1a"/>'
+  +'<path d="M10 92 q3 -10 6 0 M40 90 q3 -10 6 0 M86 92 q3 -10 6 0 M190 94 q3 -10 6 0" fill="none" stroke="#4f8a3a" stroke-width="2"/>'
+  +[[22,56],[44,44],[60,62],[82,50],[100,40],[96,66],[30,74],[112,58],[70,34]].map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="6" fill="#ffe066" fill-opacity=".25" stroke="none"/><circle cx="'+c[0]+'" cy="'+c[1]+'" r="2.4" fill="#ffe066" stroke="none"/>'}).join(''),
+ 'oeuf-mystere':'<rect x="0" y="0" width="200" height="100" fill="#e6defa" stroke="none"/>'
+  +'<rect x="132" y="12" width="48" height="34" fill="#bfe6ff"/><path d="M156 12 V46 M132 29 H180" fill="none"/>'
+  +'<path d="M0 74 H200 V100 H0 Z" fill="#c9b5ee"/><rect x="30" y="66" width="140" height="8" fill="#a9744a"/><path d="M40 74 V100 M160 74 V100" fill="none" stroke="#a9744a" stroke-width="5"/>'
+  +'<path d="M70 66 Q70 54 100 54 Q130 54 130 66 Z" fill="#c99a5a"/><path d="M76 60 l6 -4 M90 57 l4 -3 M108 57 l4 3 M120 60 l4 3" fill="none" stroke="#8a5a2a"/>'
+  +'<ellipse cx="100" cy="42" rx="15" ry="19" fill="#fff"/><circle cx="94" cy="36" r="3" fill="#6fa8f0" stroke="none"/><circle cx="106" cy="44" r="3.5" fill="#6fa8f0" stroke="none"/><circle cx="98" cy="50" r="2.5" fill="#6fa8f0" stroke="none"/><circle cx="105" cy="31" r="2" fill="#6fa8f0" stroke="none"/>'
+  +'<path d="M150 66 V58 L144 46 V40 H156 V46 L150 58" fill="#d6f5e6"/><path d="M144 50 H156" fill="none"/><path d="M40 66 V44 H52 V66 Z" fill="#fff"/><rect x="40" y="54" width="12" height="12" fill="#f2a6c9"/>'
+};
+function sceneSVG(id){return '<svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g stroke="#2b2b2b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">'+SCENES[id]+'</g></svg>'}
+
+/* Accessoires des compagnons, tirés de leur histoire (dessinés par-dessus) */
+var PROPS={
+ 'pikachu-faim':'<circle cx="80" cy="80" r="9" fill="#e8433f"/><path d="M80 71 Q82 66 86 66" fill="none"/><path d="M82 70 Q88 64 92 68 Q87 72 82 70 Z" fill="#5fb84a"/><path d="M76 76 Q78 74 80 75" fill="none" stroke="#fff" stroke-width="1.6"/>',
+ 'carapuce-plage':'<g transform="translate(-10 -6)"><path d="M78 97 V84 H82 V81 H86 V84 H90 V81 H94 V84 H98 V97 Z" fill="#e9c071"/><path d="M86 81 V72" fill="none"/><path d="M86 72 L94 75 L86 78 Z" fill="#e8433f"/></g>',
+ 'bulbizarre-dort':'<ellipse cx="79" cy="33" rx="8" ry="6" fill="#6cc4ff"/><circle cx="85" cy="29" r="4.2" fill="#6cc4ff"/><circle cx="86" cy="28" r="1" fill="#2b2b2b"/><path d="M89 29 l4 1 -4 1 Z" fill="#ffb02e"/><path d="M73 32 q4 -4 8 0" fill="none"/>',
+ 'salameche-froid':'<path d="M27 62 Q50 54 73 62 L79 88 Q50 95 21 88 Z" fill="#c94f6d"/><path d="M33 61 L28 89 M45 58 L43 93 M57 58 L58 93 M68 61 L73 89 M24 74 Q50 68 76 74" fill="none" stroke="#f3c1cd" stroke-width="2.2"/>',
+ 'course-parc':'<rect x="40" y="72" width="20" height="15" rx="2" fill="#fff"/><text x="50" y="84" text-anchor="middle" font-family="Baloo 2,Trebuchet MS,sans-serif" font-weight="800" font-size="13" fill="#e8433f" stroke="none">1</text><circle cx="43" cy="75" r="1" fill="#2b2b2b" stroke="none"/><circle cx="57" cy="75" r="1" fill="#2b2b2b" stroke="none"/>',
+ 'roucool-perdu':'__BACK__<ellipse cx="50" cy="94" rx="40" ry="6" fill="#4aa8e8"/><path d="M18 94 q5 -3 10 0 M72 94 q5 -3 10 0" fill="none" stroke="#fff" stroke-width="1.4"/>',
+ 'marche-ville':'<path d="M36 78 H64 L60 95 H40 Z" fill="#c99a5a"/><path d="M38 84 H62 M39 89 H61" fill="none" stroke="#8a5a2a" stroke-width="1.2"/><path d="M40 78 Q50 66 60 78" fill="none" stroke="#8a5a2a" stroke-width="2.5"/><circle cx="44" cy="76" r="3.4" fill="#8a3fb8"/><circle cx="51" cy="74" r="3.4" fill="#e8433f"/><circle cx="57" cy="76" r="3.4" fill="#8a3fb8"/>',
+ 'nuit-lumieres':[[10,30],[90,24],[92,52],[8,58]].map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="6" fill="#ffe066" fill-opacity=".35" stroke="none"/><circle cx="'+c[0]+'" cy="'+c[1]+'" r="2.6" fill="#ffd23f"/>'}).join(''),
+ 'oeuf-mystere':'<path d="M36 28 Q36 10 50 10 Q64 10 64 28 L60 24 L56 29 L52 24 L48 29 L44 24 L40 29 Z" fill="#fff"/><circle cx="45" cy="18" r="2.4" fill="#6fa8f0" stroke="none"/><circle cx="56" cy="16" r="2" fill="#6fa8f0" stroke="none"/><circle cx="52" cy="22" r="1.6" fill="#6fa8f0" stroke="none"/>'
+};
+function palSVG(id){
+  var n=Object.keys(PALS).indexOf(id)+1,e=EYES[id];
+  var art=PALS[id].replace('__E'+n+'__',EYE(e[0],e[1],e[2],e[3],e[4])+EYE(e[5],e[1],e[2],e[3],e[4])).replace(' rx2=""','');
+  var pr=PROPS[id]||'',back='';
+  if(pr.indexOf('__BACK__')===0){back=pr.slice(8);pr=''}
+  return '<svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#2b2b2b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">'+back+art+pr+'</g></svg>';
+}
+var GEMCOL={elec:'#f7d02c',eau:'#6fa8f0',plante:'#7bcb6f',feu:'#f59a5e',normal:'#c9c5b6',fee:'#f2a6c9',insecte:'#c0d14a'};
+function gemSVG(type){
+  return '<svg viewBox="0 0 64 64" aria-hidden="true"><g stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"><path d="M32 4 L53 22 L32 60 L11 22 Z" fill="'+GEMCOL[type]+'"/><path d="M32 4 L53 22 L32 27 L11 22 Z" fill="#fff" fill-opacity=".5"/><path d="M11 22 L32 27 L32 60 Z" fill="#000" fill-opacity=".1"/><path d="M32 27 L53 22 L32 60 Z" fill="#fff" fill-opacity=".18"/></g></svg>';
+}
+function foundAll(t){return t.words.every(function(w){return state.hunt.found[w]})}
+function huntBox(t){
+  var got=t.words.filter(function(w){return state.hunt.found[w]}).length;
+  var h='<div class="hunt"><strong>Chasse aux mots : '+got+' / 3</strong><span>Touche ces 3 mots dans le texte pour gagner un cristal.</span><div class="hunt-words">';
+  t.words.forEach(function(w){var f=state.hunt.found[w];h+='<span class="hw'+(f?' found':'')+'">'+(f?'✓ ':'')+w+'</span>'});
+  h+='</div><span role="status" aria-live="polite">'+state.hunt.msg+'</span>';
+  if(medals[t.id]&&!state.hunt.msg)h+='<span><strong>Cristal déjà gagné.</strong></span>';
+  return h+'</div>';
+}
+function wrapWords(line){
+  return line.replace(/[A-Za-zÀ-ÿŒœ]+/g,function(m){
+    var k=m.toLowerCase(),f=state.hunt.found[k];
+    return '<button class="w'+(f?' found':'')+'" data-act="word" data-w="'+k+'">'+m+'</button>';
+  });
+}
+function emblem(t,lg){return '<span class="pal'+(lg?' lg':'')+'">'+palSVG(t.id)+'</span>'}
+function medalIcon(t,locked){return '<span class="gem'+(locked?' locked':'')+'">'+gemSVG(t.type)+'</span>'}
+function rewardBox(t){
+  var h,q=state.q;
+  if(owned(t)){
+    h='<div class="reward'+(q.newMon?' pop':'')+'"><strong>'+(q.newMon?'Nouveau compagnon : '+t.mon+' !':t.mon+' est déjà dans ta collection.')+'</strong>'+emblem(t,q.newMon)+'</div>';
+  }else{
+    h='<div class="reward"><span>Avec '+NEED+' bonnes réponses, <strong>'+t.mon+'</strong> rejoint ta collection.</span></div>';
+  }
+  if(!medals[t.id])h+='<p>Bonus : relis le texte et trouve les 3 mots pour gagner le cristal.</p>';
+  return h;
+}
+function collection(){
+  var h='<div class="panel"><div class="bar"><button class="btn small ghost" data-act="home">← Retour</button></div><h2>Mes compagnons</h2>'+
+   '<p>'+ownedCount()+' compagnon'+(ownedCount()>1?'s':'')+' sur '+TEXTS.length+'. Réussis un texte avec au moins '+NEED+' bonnes réponses pour en gagner un.</p><div class="dex">';
+  TEXTS.forEach(function(t){
+    if(owned(t))h+='<div class="slot">'+emblem(t)+'<span class="no">n° '+t.no+'</span><span class="nm">'+t.mon+'</span><span class="chip"><i class="dot d-'+t.type+'"></i>'+TYPES[t.type]+'</span></div>';
+    else h+='<div class="slot locked"><span class="pal locked">'+palSVG(t.id)+'</span><span class="no">n° '+t.no+'</span><span class="nm">???</span><span>Lis « '+t.title+' »</span></div>';
+  });
+  h+='</div><h2>Mes cristaux</h2><p>'+medalCount()+' sur '+TEXTS.length+'. Trouve les 3 mots pendant la lecture pour en gagner un.</p><div class="dex">';
+  TEXTS.forEach(function(t){
+    if(medals[t.id])h+='<div class="slot">'+medalIcon(t)+'<span class="nm">'+t.title+'</span></div>';
+    else h+='<div class="slot locked">'+medalIcon(t,true)+'<span>'+t.title+'</span></div>';
+  });
+  return h+'</div></div>';
+}
+
+function reading(){
+  var t=state.text;
+  var h='<div class="panel"><div class="bar"><button class="btn small ghost" data-act="home">← Retour</button>'+
+   '<div class="row"><button class="btn small ghost" data-act="smaller" aria-label="Écrire plus petit">A−</button><button class="btn small ghost" data-act="bigger" aria-label="Écrire plus grand">A+</button></div></div>'+
+   '<span class="chip"><i class="dot d-'+t.type+'"></i>'+TYPES[t.type]+' · '+words(t)+' mots</span>'+
+   '<div class="scene banner">'+sceneSVG(t.id)+'</div><h2>'+t.title+'</h2>'+huntBox(t)+'<div class="read" style="--read-size:'+state.readSize+'rem">';
+  t.lines.forEach(function(l){h+='<p>'+wrapWords(l)+'</p>'});
+  h+='</div><div class="row"><button class="btn" data-act="start">J’ai fini de lire</button></div></div>';
+  return h;
+}
+
+function quiz(){
+  var t=state.text,Q=state.q,q=t.qs[Q.idx];
+  var h='<div class="panel"><div class="bar"><button class="btn small ghost" data-act="home">← Menu</button><span class="chip">'+t.title+'</span><div class="progress" aria-label="Question '+(Q.idx+1)+' sur 3">';
+  for(var i=0;i<3;i++)h+='<i class="'+(i<Q.idx?'done':(i===Q.idx?'on':''))+'"></i>';
+  h+='</div></div><p class="q">'+q.q+'</p><div class="opts">';
+  Q.order.forEach(function(o,i){
+    var cls='opt',mark=String.fromCharCode(65+i);
+    if(Q.chosen!==null){
+      if(o===q.a){cls+=' ok';mark='✓'}
+      else if(o===Q.chosen){cls+=' ko';mark='✗'}
+    }
+    h+='<button class="'+cls+'" data-act="answer" data-i="'+i+'"'+(Q.chosen!==null?' disabled':'')+'><span class="mark">'+mark+'</span><span>'+o+'</span></button>';
+  });
+  h+='</div>';
+  if(Q.chosen!==null){
+    var good=Q.chosen===q.a;
+    h+='<div class="fb"><strong>'+(good?'Bravo, c’est ça !':'Pas tout à fait.')+'</strong>'+
+       '<span>'+(good?'':'La bonne réponse : '+q.a+'. ')+'Dans le texte : « '+q.h+' »</span></div>'+
+       '<div class="row"><button class="btn" data-act="next">'+(Q.idx<2?'Question suivante':'Voir mon résultat')+'</button></div>';
+  }else{
+    h+='<div class="row"><button class="btn small ghost" data-act="peek">'+(Q.peek?'Cacher le texte':'Revoir le texte')+'</button></div>';
+    if(Q.peek){
+      h+='<div class="peek">';t.lines.forEach(function(l){h+='<p>'+l+'</p>'});h+='</div>';
+    }
+  }
+  return h+'</div>';
+}
+
+function result(){
+  var t=state.text,n=state.q.score;
+  var msg=n===3?'Tu as tout compris. Tu peux passer à un autre texte.':n===2?'Presque parfait ! Relis le texte et essaie encore pour avoir les trois étoiles.':'Ce n’est pas grave. Relis le texte doucement, puis réessaie.';
+  return '<div class="panel result"><span class="chip">'+t.title+'</span><h2>'+n+' bonne'+(n>1?'s':'')+' réponse'+(n>1?'s':'')+' sur 3</h2>'+stars(n,3,true)+
+   '<p class="msg">'+msg+'</p>'+rewardBox(t)+'<div class="row" style="justify-content:center">'+
+   '<button class="btn" data-act="retry">Relire ce texte</button><button class="btn ghost" data-act="dex">Ma collection</button><button class="btn ghost" data-act="home">Choisir un autre texte</button></div></div>';
+}
+
+function render(){
+  var s=state.screen;
+  var h=s==='home'?home():s==='read'?reading():s==='quiz'?quiz():s==='dex'?collection():result();
+  app.innerHTML=h;
+  if(s!==lastScreen)window.scrollTo(0,0);
+  lastScreen=s;
+}
+
+app.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');if(!b)return;
+  var a=b.getAttribute('data-act');
+  if(a==='open'){state.text=byId(b.getAttribute('data-id'));state.hunt={found:{},msg:''};state.screen='read'}
+  else if(a==='dex'){state.screen='dex'}
+  else if(a==='word'){
+    var w=b.getAttribute('data-w'),t0=state.text;
+    if(t0.words.indexOf(w)>=0){
+      if(!state.hunt.found[w]){
+        state.hunt.found[w]=true;
+        if(foundAll(t0)){
+          if(!medals[t0.id]){medals[t0.id]=true;saveMedals();state.hunt.msg='Bravo ! Cristal « '+t0.title+' » débloqué. Il est dans ta collection.'}
+          else state.hunt.msg='Les 3 mots sont trouvés !';
+        }else state.hunt.msg='Bien vu, « '+w+' » est trouvé !';
+      }
+    }else state.hunt.msg='« '+b.textContent+' » n’est pas un des 3 mots. Cherche encore.';
+  }
+  else if(a==='home'){state.screen='home'}
+  else if(a==='bigger'){state.readSize=Math.min(2.2,state.readSize+.2)}
+  else if(a==='smaller'){state.readSize=Math.max(1.1,state.readSize-.2)}
+  else if(a==='start'){
+    state.q={idx:0,score:0,chosen:null,peek:false,order:shuffle([state.text.qs[0].a].concat(state.text.qs[0].w))};
+    state.screen='quiz';
+  }
+  else if(a==='peek'){state.q.peek=!state.q.peek}
+  else if(a==='answer'){
+    var Q=state.q;if(Q.chosen!==null)return;
+    Q.chosen=Q.order[+b.getAttribute('data-i')];
+    if(Q.chosen===state.text.qs[Q.idx].a)Q.score++;
+    Q.peek=false;
+  }
+  else if(a==='next'){
+    var Q2=state.q;
+    if(Q2.idx<2){
+      Q2.idx++;Q2.chosen=null;Q2.peek=false;
+      var nq=state.text.qs[Q2.idx];Q2.order=shuffle([nq.a].concat(nq.w));
+    }else{
+      var id=state.text.id,wasOwned=owned(state.text);
+      if(progress[id]===undefined||Q2.score>progress[id])progress[id]=Q2.score;
+      save();Q2.newMon=!wasOwned&&owned(state.text);state.screen='result';
+    }
+  }
+  else if(a==='retry'){state.hunt={found:{},msg:''};state.screen='read'}
+  else if(a==='reset'){state.confirmReset=true}
+  else if(a==='reset-no'){state.confirmReset=false}
+  else if(a==='reset-yes'){progress={};save();medals={};saveMedals();state.confirmReset=false}
+  var open=document.querySelector('details.parent');var wasOpen=open&&open.open;
+  render();
+  if(wasOpen||a.indexOf('reset')===0){var d=document.querySelector('details.parent');if(d)d.open=true}
+});
+render();
+</script>
